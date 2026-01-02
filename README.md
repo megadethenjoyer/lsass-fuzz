@@ -49,7 +49,7 @@ lsass-iat-hook/
 ```
 
 ## Some notes
-I will have to somehow compile with `afl-cc` so that `afl-fuzz` runs it (and `__afl_area_ptr` needs to be valid in the executable) but also so that it doesn't instrument this IAT hooking thing. Perhaps compile `middleware.c`
+I will have to somehow compile with `afl-cc` so that `afl-fuzz` runs it (and `__afl_area_ptr` needs to be valid in the executable) but also so that it doesn't instrument this IAT hooking thing. Perhaps compile `middleware.c` with `gcc`, link that regular non-instrumented object with afl-cc, and access `__afl_area_ptr` manually from `middleware.c`
 
 Probably the easiest solution to achieve this would be:
 
@@ -61,3 +61,6 @@ afl-fuzz running in WSL inside the VM, running a "middleware" executable, which 
 
 Assume this middleware communicates to lsass-iat-hook.exe, lsass-iat-hook.exe informs it about the logged functions/syscalls, and the middleware simply passes this down to `afl-fuzz` (via `__afl_area_ptr`). Also set up persistent mode in this `middleware.c` which would actually just execute LsaLogonUser (or any other function)
 
+Some problems with this multi step middleware stuff might be speed, but we'll see
+
+I also need to get information about successful attempts, there are probably 2 things to check: lsass crashes (maybe? we'll see) and logging in as a user without proper authorization (pretty unlikely)
