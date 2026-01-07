@@ -107,6 +107,12 @@ bool hook_module( uint8_t *module_buffer, IMAGE_IMPORT_DESCRIPTOR *descriptor, u
 		auto *import_name = std::bit_cast< IMAGE_IMPORT_BY_NAME * >( module_buffer + og_func->u1.AddressOfData );
 		std::println( "(*) {}!{}", name, import_name->Name );
 
+		// TODO: get rid of this
+		if ( std::string_view( import_name->Name ) != "GetCurrentProcess" && std::string_view( import_name->Name ) != "GetCurrentProcessId" && std::string_view( import_name->Name) != "GetAsyncKeyState" ) {
+			std::println( "(!) EXCLUDING" );
+			continue;
+		}
+
 		uintptr_t offset = std::bit_cast< uintptr_t >( func ) - std::bit_cast< uintptr_t >( module_buffer );
 		uintptr_t actual_func = actual_base + offset;
 

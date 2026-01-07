@@ -6,6 +6,7 @@
 #include "driver.h"
 #include "finder.h"
 #include "hook.h"
+#include "gateway.h"
 #include "ipc.h"
 
 
@@ -13,8 +14,10 @@ int main( ) {
 
 	ipc::init( );
 
-	//hook::hook_iat( "lsa_test2.exe", "lsa_test2.exe" );
-	hook::hook_iat( "lsass.exe", "lsasrv.dll" );
+	hook::hook_iat( "harness.exe", "harness.exe" );
+	//hook::hook_iat( "lsass.exe", "lsasrv.dll" );
+
+	gateway::init( );
 
 	Sleep( 10 * 60000 );
 

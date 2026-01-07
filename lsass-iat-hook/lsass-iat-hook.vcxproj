@@ -72,11 +72,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)out\</OutDir>
-    <IntDir>$(SolutionDir)out\intermediates\$(ConfigurationName)\$(Platform)\</IntDir>
+    <IntDir>$(SolutionDir)out\intermediates\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)out\</OutDir>
-    <IntDir>$(SolutionDir)out\intermediates\$(ConfigurationName)\$(Platform)\</IntDir>
+    <IntDir>$(SolutionDir)out\intermediates\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -136,6 +136,7 @@
     <ClCompile Include="src\driver.cpp" />
     <ClCompile Include="src\finder.cpp" />
     <ClCompile Include="src\fnv.cpp" />
+    <ClCompile Include="src\gateway.cpp" />
     <ClCompile Include="src\hook.cpp" />
     <ClCompile Include="src\ipc.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -144,6 +145,7 @@
     <ClInclude Include="src\driver.h" />
     <ClInclude Include="src\finder.h" />
     <ClInclude Include="src\fnv.h" />
+    <ClInclude Include="src\gateway.h" />
     <ClInclude Include="src\hook.h" />
     <ClInclude Include="src\ipc.h" />
   </ItemGroup>
