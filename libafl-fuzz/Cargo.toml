@@ -1,0 +1,28 @@
+[package]
+name = "libafl-fuzz"
+version = "0.0.1"
+authors = [
+    "mde"
+]
+
+[features]
+default = ["std"]
+tui = []
+std = []
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+lto = true
+codegen-units = 1
+opt-level = 3
+debug = true
+
+[dependencies]
+env_logger = "0.11.8"
+libafl = { path = "../libafl/crates/libafl", features = ["tui_monitor"] }
+libafl_bolts = { path = "../libafl/crates/libafl_bolts" }
+log ={ version = "0.4.29", features = ["release_max_level_info"] }
+windows = {version="0.62", features=["Win32_System_IO", "Win32_Storage_FileSystem", "Win32_Security", "Win32_Security_Authentication_Identity"]}
