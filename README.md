@@ -58,6 +58,7 @@ libafl-fuzz/
 To get this up and running (in a VM, I don't recommend running on your host):
 
 - Build the entire solution (with VS)
+- Start the helper driver (with sc) - TODO: do it automatically
 - Get yourself a copy of libAFL (from their repo) and put it in `libafl` (where `crates` must be inside `./libafl`)
 - Build libafl-fuzz (cargo build)
 - run exec.cmd from libafl-fuzz
