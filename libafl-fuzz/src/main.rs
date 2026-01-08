@@ -25,9 +25,17 @@ const SIGNALS_LEN: usize = 10;
 static mut SIGNALS: [u8; SIGNALS_LEN] = [0; SIGNALS_LEN];
 static mut SIGNALS_PTR: *mut u8 = &raw mut SIGNALS as _;
 
+const BUFSIZE: usize = 4;
+
 /// Assign a signal to the signals map
 fn signals_set(idx: usize) {
     unsafe { write_volatile(SIGNALS_PTR.add(idx), 1) };
+}
+
+fn signal_reset() {
+    for i in 0..SIGNALS_LEN {
+        unsafe { write_volatile(SIGNALS_PTR.add(i), 0) };
+    }
 }
 
 enum WB {
@@ -61,7 +69,8 @@ fn read(f: HANDLE) -> WB {
     }
 }
 
-fn write_buf(f: HANDLE, x: &[u8; 5]) {
+
+fn write_buf(f: HANDLE, x: &[u8; BUFSIZE]) {
     unsafe { WriteFile(f, Some(x), None, None).unwrap(); }
 }
 
@@ -79,7 +88,7 @@ fn get_sigid(hash: u32, sigids: &mut HashMap<u32, usize>) -> usize {
     return unsafe { curr_id };
 }
 
-fn do_harness(f: HANDLE, x: &[u8; 5], sigids: &mut HashMap<u32, usize>) -> bool {
+fn do_harness(f: HANDLE, x: &[u8; BUFSIZE], sigids: &mut HashMap<u32, usize>) -> bool {
     write_buf(f, x);
     loop {
         match read(f) {
@@ -115,10 +124,11 @@ pub fn main() {
     let mut harness = |input: &BytesInput| {
         let target = input.target_bytes();
         let buf = target.as_slice();
-        if buf.len() == 5 {
+        signal_reset();
+        if buf.len() == BUFSIZE {
             signals_set(0);
             // signals_set(1);
-            if do_harness(f, buf[0..5].try_into().unwrap(), &mut sigids) {
+            if do_harness(f, buf[0..BUFSIZE].try_into().unwrap(), &mut sigids) {
                 println!("CRASH TOOK {:?}", start.elapsed());
             }
         }
@@ -193,7 +203,12 @@ pub fn main() {
     let mutator = HavocScheduledMutator::new(havoc_mutations());
     let mut stages = tuple_list!(StdMutationalStage::new(mutator));
 
-    fuzzer.add_input(&mut state, &mut executor, &mut mgr, ValueInput::new(vec![b'a', b'a', b'a', b'a', b'a'])).unwrap();
+    let mut sample_buf= vec![];
+    for _ in 0..BUFSIZE {
+        sample_buf.push(0u8);
+    }
+
+    fuzzer.add_input(&mut state, &mut executor, &mut mgr, ValueInput::new(sample_buf)).unwrap();
 
     fuzzer
         .fuzz_loop(&mut stages, &mut executor, &mut state, &mut mgr)

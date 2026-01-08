@@ -9,60 +9,57 @@
 #include <cstdlib>
 #include <cstdio>
 #include <winternl.h>
+#include <print>
+
+#include "sample.h"
+
+using current_harness = sample_harness;
+
+constexpr size_t BUFSIZE = current_harness::buf_size;
+char buffer[ BUFSIZE ];
+
+HANDLE g_pipe = { };
+
+void send_done( ) {
+	char done_buffer[ 4 ] = { 'd', 'o', 'n', 'e' };
+	WriteFile( g_pipe, done_buffer, sizeof( done_buffer ), nullptr, nullptr );
+}
+
+void send_crashed( ) {
+	char crash_buffer[ 4 ] = { 0xAA, 0xCC, 0xAA, 0xCC };
+	WriteFile( g_pipe, crash_buffer, sizeof( crash_buffer ), nullptr, nullptr );
+}
+
+void recv_buf( ) {
+	ReadFile( g_pipe, buffer, sizeof( buffer ), nullptr, nullptr );
+}
 
 int main( ) {
-	puts( "1" );
 	HANDLE h_pipe = CreateNamedPipeA( "\\\\.\\pipe\\TargetPipe", PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 0, 4, 0, nullptr );
 	assert( h_pipe != INVALID_HANDLE_VALUE );
 
-	puts( "2" );
-	bool ic = ConnectNamedPipe( h_pipe, NULL );
-	if ( ic == false ) {
-		ic = GetLastError( ) == ERROR_PIPE_CONNECTED;
+	g_pipe = h_pipe;
+
+	bool is_connected = ConnectNamedPipe( h_pipe, NULL );
+	if ( is_connected == false ) {
+		is_connected = GetLastError( ) == ERROR_PIPE_CONNECTED;
 	}
-	puts( "3" );
-	assert( ic );
-	puts( "4" );
+	assert( is_connected );
 
-	char buffer[ 5 ];
+	std::println( "(*) Pipe ready, run main loop (bufsize = {})", current_harness::buf_size );
+	while ( true ) {
+		recv_buf( );
 
-	for ( ;; ) {
-		//puts( "a" );
-		ReadFile( h_pipe, buffer, sizeof( buffer ), nullptr, nullptr );
-		//puts( "b" );
-
-		//std::println( "got buffer {} {} {} {}", buffer[ 0 ], buffer[ 1 ], buffer[ 2 ], buffer[ 3 ] );
-
-
-		if ( buffer[ 0 ] == 'a' ) {
-			GetCurrentProcess( );
-			if ( buffer[ 1 ] == 'b' ) {
-				GetCurrentProcessId( );
-				if ( buffer[ 2 ] == 'c' ) {
-					GetAsyncKeyState( 'x' );
-					if ( buffer[ 3 ] == 'd' ) {
-						printf( "%c%c%c%c%c\n", buffer[ 0 ], buffer[ 1 ], buffer[ 2 ], buffer[ 3 ], buffer[ 4 ] );
-						GetCurrentThreadId( );
-						if ( buffer[ 4 ] == 'e' ) {
-
-							uint32_t nc = 0xCCAACCAA;
-							WriteFile( h_pipe, ( void * )&nc, sizeof( nc ), nullptr, nullptr );
-							puts( "crash" );
-							system( "pause" );
-							return 0;
-						}
-					}
-				}
-			}
+		bool crashed = current_harness::execute( buffer );
+		if ( crashed ) {
+			send_crashed( );
+			puts( "CRASH" );
+			system( "pause" );
+			return EXIT_SUCCESS;
 		}
 
-		uint32_t nb = 0;
-		nb = 'enod';
-		WriteFile( h_pipe, ( char * )&nb, sizeof( nb ), nullptr, nullptr );
-		//puts( "c" );
+		send_done( );
 	}
 
-	puts( "bye" );
-	//std::println( "bye" );
 
 }
