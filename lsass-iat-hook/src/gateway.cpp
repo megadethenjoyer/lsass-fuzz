@@ -6,7 +6,7 @@
 #include "hook.h"
 
 constexpr const char *pipe_name = "\\\\.\\pipe\\GatewayPipe";
-constexpr size_t BUF_SIZE = 4;
+constexpr size_t BUF_SIZE = 8*3*2;
 
 void gw_client_thread( HANDLE h_pipe ) {
 	HANDLE harness = CreateFile( "\\\\.\\pipe\\TargetPipe", GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_ALWAYS, 0, nullptr );
@@ -16,10 +16,22 @@ void gw_client_thread( HANDLE h_pipe ) {
 
 	char buffer[ BUF_SIZE ];
 
+	//gateway::op_mutex.lock( );
 	while ( true ) {
+		gateway::op_mutex.lock( );
+		gateway::in_operation = false;
+		gateway::op_mutex.unlock( );
+		//std::println( "read" );
+		gateway::pipe_mutex.lock( );
 		bool read_st = ReadFile( h_pipe, buffer, sizeof( buffer ), nullptr, nullptr );
+		gateway::pipe_mutex.unlock( );
 		if ( !read_st ) { std::println( "(*) GW IPC: read fail {}", GetLastError( ) ); }
 		assert( read_st );
+		//std::println( "done read" );
+
+		gateway::op_mutex.lock( );
+		gateway::in_operation = true;
+		gateway::op_mutex.unlock( );
 
 		WriteFile( harness, buffer, sizeof( buffer ), nullptr, nullptr );
 
@@ -27,14 +39,26 @@ void gw_client_thread( HANDLE h_pipe ) {
 			char harness_buffer[ 4 ];
 			ReadFile( harness, harness_buffer, sizeof( harness_buffer ), nullptr, nullptr );
 
+			bool done = *( uint32_t * )harness_buffer == 'enod';
+
+
+			if ( done ) {
+				//std::println( "done" );
+				gateway::op_mutex.lock( );
+				gateway::in_operation = false;
+				gateway::op_mutex.unlock( );
+				//std::println( "ddone {}", gateway::in_operation );
+			}
+
 			char wb_buffer[ 1 + 4 ] = { };
 			wb_buffer[ 0 ] = 0x02;
 			memcpy( wb_buffer + 1, harness_buffer, sizeof( harness_buffer ) );
 			gateway::pipe_mutex.lock( );
-			assert( WriteFile( h_pipe, wb_buffer, sizeof( wb_buffer ), nullptr, nullptr ) );
+			DWORD wr = { };
+			assert( WriteFile( h_pipe, wb_buffer, sizeof( wb_buffer ), &wr, nullptr ) );
 			gateway::pipe_mutex.unlock( );
 
-			if ( *( uint32_t * )harness_buffer == 'enod' ) {
+			if ( done ) {
 				break;
 			}
 		}

@@ -8,12 +8,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
-#include <winternl.h>
 #include <print>
 
 #include "sample.h"
+#include "lsalogonuser-interactive-logon.h"
 
-using current_harness = sample_harness;
+using current_harness = lsa_logon_user_interactive_logon_harness;
 
 constexpr size_t BUFSIZE = current_harness::buf_size;
 char buffer[ BUFSIZE ];
@@ -35,6 +35,14 @@ void recv_buf( ) {
 }
 
 int main( ) {
+	std::println( "(*) Setting up harness" );
+	if ( !current_harness::setup( ) ) {
+		std::println( "(!) Failed to set up harness" );
+		system( "pause" );
+		return EXIT_FAILURE;
+	}
+
+	std::println( "(+) Harness set up" );
 	HANDLE h_pipe = CreateNamedPipeA( "\\\\.\\pipe\\TargetPipe", PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 0, 4, 0, nullptr );
 	assert( h_pipe != INVALID_HANDLE_VALUE );
 

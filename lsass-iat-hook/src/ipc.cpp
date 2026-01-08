@@ -15,15 +15,35 @@ void client_thread( HANDLE h_pipe ) {
 		assert( ReadFile( h_pipe, buffer, sizeof( buffer ), nullptr, nullptr ) );
 
 		uint32_t fnv_hash = *std::bit_cast< uint32_t * >( &buffer[ 0 ] );
-		std::println( "(*) ipc: got buffer: fnv hash {}", fnv_hash );
-		std::println( "         -> by name {}", hook::g_names[ fnv_hash ] );
+		//std::println( "(*) ipc: got buffer: fnv hash {}", fnv_hash );
+		//std::println( "         -> by name {}", hook::g_names[ fnv_hash ] );
 
 		char wb_buffer[ 5 ] = { };
 		wb_buffer[ 0 ] = 0x01;
 		*std::bit_cast< uint32_t * >( wb_buffer + 1 ) = fnv_hash;
-		gateway::pipe_mutex.lock( );
-		assert( WriteFile( gateway::pipe, wb_buffer, sizeof( wb_buffer ), nullptr, nullptr ) );
-		gateway::pipe_mutex.unlock( );
+
+		//std::println( "o op lock" );
+		gateway::op_mutex.lock( );
+		//std::println( "o op lockd" );
+		
+		if ( gateway::in_operation ) {
+			//std::println( "inop" );
+			gateway::pipe_mutex.lock( );
+
+			//DWORD mode = PIPE_NOWAIT | PIPE_READMODE_MESSAGE;
+			//SetNamedPipeHandleState( gateway::pipe, &mode, nullptr, nullptr );
+
+			DWORD wr = { };
+			assert( WriteFile( gateway::pipe, wb_buffer, sizeof( wb_buffer ), &wr, nullptr ) );
+
+			//mode = PIPE_WAIT | PIPE_READMODE_MESSAGE;
+			//SetNamedPipeHandleState( gateway::pipe, &mode, nullptr, nullptr );
+
+			gateway::pipe_mutex.unlock( );
+		}
+
+		//std::println( "o op unl" );
+		gateway::op_mutex.unlock( );
 
 		//std::println( "(*) Written to pipe" );
 	}

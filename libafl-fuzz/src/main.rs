@@ -18,14 +18,14 @@ use libafl::{
 use libafl_bolts::{
     current_nanos, nonnull_raw_mut, nonzero, rands::StdRand, tuples::tuple_list, AsSlice,
 };
-use windows::{Win32::{self, Foundation::{GENERIC_READ, GENERIC_WRITE, HANDLE}, Security::Authentication::Identity::DOMAIN_LOCKOUT_ADMINS, Storage::FileSystem::{CreateFileA, FILE_CREATION_DISPOSITION, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_MODE, OPEN_EXISTING, ReadFile, WriteFile}, System::Threading::Sleep}, core::s};
+use windows::{Win32::System::Pipes::SetNamedPipeHandleState, Win32::{self, Foundation::{GENERIC_READ, GENERIC_WRITE, HANDLE}, Security::Authentication::Identity::DOMAIN_LOCKOUT_ADMINS, Storage::FileSystem::{CreateFileA, FILE_CREATION_DISPOSITION, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_MODE, OPEN_EXISTING, ReadFile, WriteFile}, System::{Pipes::{PIPE_READMODE_MESSAGE, PIPE_WAIT}, Threading::Sleep}}, core::s};
 
 /// Coverage map with explicit assignments due to the lack of instrumentation
-const SIGNALS_LEN: usize = 10;
+const SIGNALS_LEN: usize = 1088;
 static mut SIGNALS: [u8; SIGNALS_LEN] = [0; SIGNALS_LEN];
 static mut SIGNALS_PTR: *mut u8 = &raw mut SIGNALS as _;
 
-const BUFSIZE: usize = 4;
+const BUFSIZE: usize = 8*3*2;
 
 /// Assign a signal to the signals map
 fn signals_set(idx: usize) {
@@ -114,8 +114,11 @@ fn do_harness(f: HANDLE, x: &[u8; BUFSIZE], sigids: &mut HashMap<u32, usize>) ->
 }
 
 pub fn main() {
+    unsafe { Sleep(1000) };
     let mut sigids = HashMap::new();
     let f = unsafe { CreateFileA(s!("\\\\.\\pipe\\GatewayPipe"), GENERIC_READ.0 | GENERIC_WRITE.0, FILE_SHARE_MODE(0), None, OPEN_EXISTING as FILE_CREATION_DISPOSITION, FILE_FLAGS_AND_ATTRIBUTES(0), None).unwrap() };
+
+    // unsafe { let mut mode = PIPE_READMODE_MESSAGE.0 | PIPE_WAIT.0; SetNamedPipeHandleState(f, &mode, None, None) };
 
     let start = Instant::now();
 

@@ -7,5 +7,8 @@ namespace gateway {
 	inline HANDLE pipe;
 	inline std::mutex pipe_mutex;
 
+	inline bool in_operation = false;
+	inline std::mutex op_mutex;
+
 	void init( );
 }

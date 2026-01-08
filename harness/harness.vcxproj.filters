@@ -21,9 +21,15 @@
     <ClCompile Include="src\sample.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\lsalogonuser-interactive-logon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\sample.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lsalogonuser-interactive-logon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
