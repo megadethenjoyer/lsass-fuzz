@@ -14,5 +14,5 @@ namespace finder {
 	};
 
 	uint64_t find_pid( std::string_view target_name );
-	mod find_module( uint64_t pid, std::string_view target_name );
+	mod find_module( std::string_view target_name );
 }

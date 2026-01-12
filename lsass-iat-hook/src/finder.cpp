@@ -60,7 +60,7 @@ bool is_equal_lower( std::wstring_view a, std::string_view b ) {
 	return true;
 }
 
-auto finder::find_module( uint64_t pid, std::string_view target_name ) -> mod {
+auto finder::find_module( std::string_view target_name ) -> mod {
 	PEB peb = driver::get_peb( );
 	auto ldr = driver::read< PEB_LDR_DATA >( std::bit_cast< uintptr_t >( peb.Ldr ) );
 

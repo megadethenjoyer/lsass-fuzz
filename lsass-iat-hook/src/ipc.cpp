@@ -5,18 +5,30 @@
 #include "ipc.h"
 #include "gateway.h"
 #include "hook.h"
+#include "driver.h"
 
 constexpr const char *pipe_name = "\\\\.\\pipe\\LsassFuzzPipe";
 
 void client_thread( HANDLE h_pipe ) {
-	char buffer[ 4 ];
+	char buffer[ 8 ];
 
 	for ( ;; ) {
 		assert( ReadFile( h_pipe, buffer, sizeof( buffer ), nullptr, nullptr ) );
 
 		uint32_t fnv_hash = *std::bit_cast< uint32_t * >( &buffer[ 0 ] );
+		uint32_t thread_id = *std::bit_cast< uint32_t * >( &buffer[ 4 ] );
+
+		if ( !hook::g_smbuf ) {
+			continue;
+		}
+		auto smbuf_tid = driver::read< uintptr_t >( hook::g_smbuf );
+
+		if ( smbuf_tid != gateway::tid ) {
+			continue;
+		}
+
 		//std::println( "(*) ipc: got buffer: fnv hash {}", fnv_hash );
-		//std::println( "         -> by name {}", hook::g_names[ fnv_hash ] );
+		//std::println( "         -> by name     {}", hook::g_names[ fnv_hash ] );
 
 		char wb_buffer[ 5 ] = { };
 		wb_buffer[ 0 ] = 0x01;
@@ -28,6 +40,7 @@ void client_thread( HANDLE h_pipe ) {
 		
 		if ( gateway::in_operation ) {
 			//std::println( "inop" );
+			//std::println( "         -> by name {}", hook::g_names[ fnv_hash ] );
 			gateway::pipe_mutex.lock( );
 
 			//DWORD mode = PIPE_NOWAIT | PIPE_READMODE_MESSAGE;

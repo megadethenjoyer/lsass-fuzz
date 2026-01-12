@@ -108,9 +108,18 @@ bool lsa_logon_user_interactive_logon_harness::execute( char *buffer ) {
 	il.Password = a2;
 	il.UserName = a3;
 
-	//std::cout << "(*) Harness using LDN = " << (char*)a1.Buffer << " with len " << a1.Length << '\n';
-	//std::cout << "                  PW  = " << (char*)a2.Buffer << " with len " << a2.Length << '\n';
-	//std::cout << "                  UN  = " << (char*)a3.Buffer << " with len " << a3.Length << '\n';
+	for ( int i = 0; i < a1.Length; i++ ) {
+		std::cout << ( char )a1.Buffer[ i ];
+	}
+	std::cout << " // ";
+	for ( int i = 0; i < a2.Length; i++ ) {
+		std::cout << ( char )a2.Buffer[ i ];
+	}
+	std::cout << " // ";
+	for ( int i = 0; i < a3.Length; i++ ) {
+		std::cout << ( char )a3.Buffer[ i ];
+	}
+	std::cout << '\n';
 
 	void *profile;
 	ULONG profile_len;

@@ -7,6 +7,7 @@ namespace gateway {
 	inline HANDLE pipe;
 	inline std::mutex pipe_mutex;
 
+	inline uint32_t tid;
 	inline bool in_operation = false;
 	inline std::mutex op_mutex;
 

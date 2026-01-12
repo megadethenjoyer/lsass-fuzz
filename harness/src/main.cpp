@@ -54,6 +54,13 @@ int main( ) {
 	}
 	assert( is_connected );
 
+	uint32_t tid = GetCurrentThreadId( );
+	std::println( "(*) Pipe connected, send TID {}", tid );
+	assert( WriteFile( h_pipe, ( void* )&tid, 4, nullptr, nullptr ) );
+
+	std::println( "(*) written" );
+	Sleep( 500 );
+
 	std::println( "(*) Pipe ready, run main loop (bufsize = {})", current_harness::buf_size );
 	while ( true ) {
 		recv_buf( );

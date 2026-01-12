@@ -12,6 +12,12 @@ void gw_client_thread( HANDLE h_pipe ) {
 	HANDLE harness = CreateFile( "\\\\.\\pipe\\TargetPipe", GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_ALWAYS, 0, nullptr );
 	assert( harness != INVALID_HANDLE_VALUE );
 
+	uint32_t start_tid = { };
+	assert( ReadFile( harness, ( void * )&start_tid, 4, nullptr, nullptr ) );
+
+	std::println( "(*) ipc: connected by tid {}", start_tid );
+
+	gateway::tid = start_tid;
 	gateway::pipe = h_pipe;
 
 	char buffer[ BUF_SIZE ];

