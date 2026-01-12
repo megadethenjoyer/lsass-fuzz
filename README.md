@@ -2,17 +2,22 @@
 
 Fuzzing lsass with libAFL using a remote IAT hook as coverage information
 
-### ❗ Currently only fuzzing a test harness (read below)
 ## TODO
 ~~[ ] Forward this coverage information to afl-fuzz (probably via manually writing to the __afl_area_ptr)~~
 - using libAFL
 
-[ ] Write the actual harness
+[X] Write the actual harness
 - just implement Lsa function calling
+
+[ ] Write more harnesses (see notes below)
 
 [ ] Perhaps also stackwalk to get better coverage information (get information about specific branches)
 
 [ ] Write a blogpost ?? :)
+
+[ ] Get a more stable way of getting SspirLogonUser (and others) base address and instruction sizes (see notes below)
+
+[ ] Document this a little more
 
 #### Other theoretical methods
 
@@ -65,12 +70,22 @@ To get this up and running (in a VM, I don't recommend running on your host):
 
 Currently it works like this: libafl-fuzz does the fuzzing of a harness in Rust (see main and do_harness). This harness basically just logs syscall hooks (which it gathers via IPC to lsass-iat-hook.exe).
 
+Also in its current state it probably won't work for you (unless you're on a specific windows version), because SspirLogonUser offset and prolog instruction sizes are hardcoded in lsass-iat-hook main.cpp.
+See todo above, need to get a more stable way of getting this stuff. Probably automatically download pdb from microsoft servers to get offset & use bddisasm to get prolog size.
+I guess if somebody (reader) is trying to get this up and running you might aswell contribute by doing this in a PR (might aswell just make a python script or something, doesn't matter)
+
 harness.exe is running with IPC to lsass-iat-hook.exe. libafl-fuzz sends a buffer to lsass-iat-hook.exe, lsass-iat-hook.exe forwards it to harness.exe, lsass-iat-hook.exe logs syscalls and sends them to libafl-fuzz.exe for coverage.
 
 When harness.exe is finished with its operation, it sends back a done message to lsass-iat-hook.exe. If it "crashed" (valid input, in this case "abcde") it sends a crashed message to lsass-iat-hook.exe.
 
 This is done to simulate lsass client calls.
 
-This will be extended to use LsaLogonUser instead of the "abcde" buffer thing.
+~~This will be extended to use LsaLogonUser instead of the "abcde" buffer thing.~~
 
-... I need to get information about successful attempts, there are probably 2 things to check: lsass crashes (~~maybe? we'll see~~ most likely) and logging in as a user without proper authorization (pretty unlikely)
+~~... I need to get information about successful attempts, there are probably 2 things to check: lsass crashes (~~maybe? we'll see~~ most likely) and logging in as a user without proper authorization (pretty unlikely)~~
+
+Currently I am using LsaLogonUser with MSV1.0 Interactive logon, implemented in harness. See its code for reference.
+I need to make a lot more harnesses for this to be useful.
+I also should figure out lsass crashes. (They would be the most interesting since I could probably do remote DOS of a machine with them, or maybe even full blown RCE or local ACE)
+
+With the recent commits I added thread safety, later I will add multithreading via multiple processes which would mean multiple harnesses at the same time (kinda required since one harness only really does one authentication package, and there are a lot of them)
