@@ -2,10 +2,11 @@
 extern crate windows;
 extern crate libafl;
 extern crate libafl_bolts;
+extern crate windows_core;
 
 #[cfg(windows)]
 use std::ptr::write_volatile;
-use std::{collections::HashMap, convert::TryInto, path::PathBuf, ptr::write, time::Instant};
+use std::{collections::HashMap, convert::TryInto, ffi::{OsStr, OsString}, path::PathBuf, ptr::write, time::Instant};
 
 
 #[cfg(feature = "tui")]
@@ -18,14 +19,14 @@ use libafl::{
 use libafl_bolts::{
     current_nanos, nonnull_raw_mut, nonzero, rands::StdRand, tuples::tuple_list, AsSlice,
 };
-use windows::{Win32::{self, Foundation::{GENERIC_READ, GENERIC_WRITE, HANDLE}, Security::Authentication::Identity::DOMAIN_LOCKOUT_ADMINS, Storage::FileSystem::{CreateFileA, FILE_CREATION_DISPOSITION, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_MODE, OPEN_EXISTING, ReadFile, WriteFile}, System::Threading::Sleep}, core::s};
+use windows::{Win32::System::Pipes::SetNamedPipeHandleState, Win32::{self, Foundation::{GENERIC_READ, GENERIC_WRITE, HANDLE}, Security::Authentication::Identity::DOMAIN_LOCKOUT_ADMINS, Storage::FileSystem::{CreateFileA, FILE_CREATION_DISPOSITION, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_MODE, OPEN_EXISTING, ReadFile, WriteFile}, System::{Pipes::{PIPE_READMODE_MESSAGE, PIPE_WAIT}, Threading::Sleep}}, core::s};
 
 /// Coverage map with explicit assignments due to the lack of instrumentation
-const SIGNALS_LEN: usize = 10;
+const SIGNALS_LEN: usize = 1088;
 static mut SIGNALS: [u8; SIGNALS_LEN] = [0; SIGNALS_LEN];
 static mut SIGNALS_PTR: *mut u8 = &raw mut SIGNALS as _;
 
-const BUFSIZE: usize = 4;
+static mut BUFSIZE: usize = 0;
 
 /// Assign a signal to the signals map
 fn signals_set(idx: usize) {
@@ -70,7 +71,7 @@ fn read(f: HANDLE) -> WB {
 }
 
 
-fn write_buf(f: HANDLE, x: &[u8; BUFSIZE]) {
+fn write_buf(f: HANDLE, x: &[u8]) {
     unsafe { WriteFile(f, Some(x), None, None).unwrap(); }
 }
 
@@ -88,7 +89,7 @@ fn get_sigid(hash: u32, sigids: &mut HashMap<u32, usize>) -> usize {
     return unsafe { curr_id };
 }
 
-fn do_harness(f: HANDLE, x: &[u8; BUFSIZE], sigids: &mut HashMap<u32, usize>) -> bool {
+fn do_harness(f: HANDLE, x: &[u8], sigids: &mut HashMap<u32, usize>) -> bool {
     write_buf(f, x);
     loop {
         match read(f) {
@@ -114,8 +115,27 @@ fn do_harness(f: HANDLE, x: &[u8; BUFSIZE], sigids: &mut HashMap<u32, usize>) ->
 }
 
 pub fn main() {
+    unsafe {
+        BUFSIZE = std::env::args().nth(1).unwrap().parse().unwrap();
+    }
+
+    unsafe { Sleep(1000) };
     let mut sigids = HashMap::new();
-    let f = unsafe { CreateFileA(s!("\\\\.\\pipe\\GatewayPipe"), GENERIC_READ.0 | GENERIC_WRITE.0, FILE_SHARE_MODE(0), None, OPEN_EXISTING as FILE_CREATION_DISPOSITION, FILE_FLAGS_AND_ATTRIBUTES(0), None).unwrap() };
+
+    let pipe_path = std::env::args().nth(2).unwrap();
+
+    println!("bufsize {} at path {}", unsafe { BUFSIZE }, pipe_path );
+
+    // https://kennykerr.ca/rust-getting-started/string-tutorial.html
+    let mut pipe_path_a = Vec::from(pipe_path.as_bytes());
+    pipe_path_a.push(0);
+
+    // for x in &pipe_path_a {
+    //     println!("{}", char::from_u32(*x as u32).unwrap() );
+    // }
+    let f = unsafe { CreateFileA(windows_core::PCSTR(pipe_path_a.as_ptr()), GENERIC_READ.0 | GENERIC_WRITE.0, FILE_SHARE_MODE(0), None, OPEN_EXISTING as FILE_CREATION_DISPOSITION, FILE_FLAGS_AND_ATTRIBUTES(0), None).unwrap() };
+
+    // unsafe { let mut mode = PIPE_READMODE_MESSAGE.0 | PIPE_WAIT.0; SetNamedPipeHandleState(f, &mode, None, None) };
 
     let start = Instant::now();
 
@@ -125,10 +145,10 @@ pub fn main() {
         let target = input.target_bytes();
         let buf = target.as_slice();
         signal_reset();
-        if buf.len() == BUFSIZE {
+        if buf.len() == unsafe { BUFSIZE } {
             signals_set(0);
             // signals_set(1);
-            if do_harness(f, buf[0..BUFSIZE].try_into().unwrap(), &mut sigids) {
+            if do_harness(f, buf[0..unsafe{ BUFSIZE }].try_into().unwrap(), &mut sigids) {
                 println!("CRASH TOOK {:?}", start.elapsed());
             }
         }
@@ -204,7 +224,7 @@ pub fn main() {
     let mut stages = tuple_list!(StdMutationalStage::new(mutator));
 
     let mut sample_buf= vec![];
-    for _ in 0..BUFSIZE {
+    for _ in 0..unsafe{ BUFSIZE } {
         sample_buf.push(0u8);
     }
 

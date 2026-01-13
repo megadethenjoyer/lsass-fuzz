@@ -8,12 +8,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
-#include <winternl.h>
 #include <print>
 
 #include "sample.h"
+#include "lsalogonuser-interactive-logon.h"
 
-using current_harness = sample_harness;
+using current_harness = lsa_logon_user_interactive_logon_harness;
 
 constexpr size_t BUFSIZE = current_harness::buf_size;
 char buffer[ BUFSIZE ];
@@ -34,8 +34,23 @@ void recv_buf( ) {
 	ReadFile( g_pipe, buffer, sizeof( buffer ), nullptr, nullptr );
 }
 
-int main( ) {
-	HANDLE h_pipe = CreateNamedPipeA( "\\\\.\\pipe\\TargetPipe", PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 0, 4, 0, nullptr );
+int main( int argc, char **argv ) {
+	if ( argc < 2 ) {
+		std::println( "(*) bad args" );
+		std::println( "    usage: <x.exe> gw_pipe_name" );
+		system( "pause" );
+		return 2;
+	}
+	std::println( "(*) Setting up harness" );
+	if ( !current_harness::setup( ) ) {
+		std::println( "(!) Failed to set up harness" );
+		system( "pause" );
+		return EXIT_FAILURE;
+	}
+
+	std::println( "(+) Harness set up" );
+	std::println( "(*) Use pipe {}", argv[ 1 ] );
+	HANDLE h_pipe = CreateNamedPipeA( argv[ 1 ], PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 0, 4, 0, nullptr );
 	assert( h_pipe != INVALID_HANDLE_VALUE );
 
 	g_pipe = h_pipe;
@@ -45,6 +60,13 @@ int main( ) {
 		is_connected = GetLastError( ) == ERROR_PIPE_CONNECTED;
 	}
 	assert( is_connected );
+
+	uint32_t tid = GetCurrentThreadId( );
+	std::println( "(*) Pipe connected, send TID {}", tid );
+	assert( WriteFile( h_pipe, ( void* )&tid, 4, nullptr, nullptr ) );
+
+	std::println( "(*) written" );
+	Sleep( 500 );
 
 	std::println( "(*) Pipe ready, run main loop (bufsize = {})", current_harness::buf_size );
 	while ( true ) {
