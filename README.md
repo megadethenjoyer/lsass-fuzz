@@ -2,6 +2,10 @@
 
 Fuzzing lsass with libAFL using a remote IAT hook as coverage information
 
+![picture of the fuzzer fuzzing](https://i.imgur.com/Un8Smdg.png)
+
+In the above screenshot you can see multiple processes fuzzing. Currently they are fuzzing the exact same endpoint but later this will be extended to fuzz multiple things in parallel.
+
 ## TODO
 ~~[ ] Forward this coverage information to afl-fuzz (probably via manually writing to the __afl_area_ptr)~~
 - using libAFL
