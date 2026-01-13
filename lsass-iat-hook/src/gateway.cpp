@@ -13,7 +13,8 @@ void gw_client_thread( HANDLE h_pipe ) {
 	assert( harness != INVALID_HANDLE_VALUE );
 
 	uint32_t start_tid = { };
-	assert( ReadFile( harness, ( void * )&start_tid, 4, nullptr, nullptr ) );
+	bool res = ReadFile( harness, ( void * )&start_tid, 4, nullptr, nullptr );
+	assert( res );
 
 	std::println( "(*) ipc: connected by tid {}", start_tid );
 
@@ -61,7 +62,8 @@ void gw_client_thread( HANDLE h_pipe ) {
 			memcpy( wb_buffer + 1, harness_buffer, sizeof( harness_buffer ) );
 			gateway::pipe_mutex.lock( );
 			DWORD wr = { };
-			assert( WriteFile( h_pipe, wb_buffer, sizeof( wb_buffer ), &wr, nullptr ) );
+			bool res = WriteFile( h_pipe, wb_buffer, sizeof( wb_buffer ), &wr, nullptr );
+			assert( res );
 			gateway::pipe_mutex.unlock( );
 
 			if ( done ) {

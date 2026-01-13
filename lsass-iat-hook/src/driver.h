@@ -16,15 +16,17 @@ namespace driver {
 	
 	template <typename T>
 	T read( uintptr_t remote_addr ) {
-		T x;
-		assert( read_raw( remote_addr, &x, sizeof( x ) ) );
+		T x = { };
+		bool r = read_raw( remote_addr, &x, sizeof( x ) );
+		assert( r );
 		return x;
 	}
 
 	template <typename T>
 	T read( T *remote_addr ) {
-		T x;
-		assert( read_raw( std::bit_cast< uintptr_t >( remote_addr ), &x, sizeof( x ) ) );
+		T x = { };
+		bool r = read_raw( std::bit_cast< uintptr_t >( remote_addr ), &x, sizeof( x ) );
+		assert( r );
 		return x;
 	}
 

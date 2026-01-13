@@ -86,7 +86,7 @@ uintptr_t driver::alloc( size_t size ) {
 		.data_size = size,
 		.local_addr = static_cast< void * >( &alloc ),
 	};
-	assert( ioctl( ALLOC, &data ) );
+	ioctl( ALLOC, &data );
 
 	return alloc;
 }
@@ -99,7 +99,7 @@ uintptr_t driver::duplicate_handle( HANDLE source ) {
 		.remote_addr = std::bit_cast< uintptr_t >( source ),
 		.local_addr = static_cast< void * >( &h_target ),
 	};
-	assert( ioctl( DUPLICATE, &data ) );
+	ioctl( DUPLICATE, &data );
 
 	return h_target;
 }
@@ -117,7 +117,7 @@ uint32_t driver::protect( uintptr_t address, size_t size, uint32_t protection ) 
 		.remote_addr = address,
 		.local_addr = static_cast< void * >( info ),
 	};
-	assert( ioctl( PROTECT, &data ) );
+	ioctl( PROTECT, &data );
 
 	return old_protect;
 }

@@ -13,7 +13,8 @@ void client_thread( HANDLE h_pipe ) {
 	char buffer[ 8 ];
 
 	for ( ;; ) {
-		assert( ReadFile( h_pipe, buffer, sizeof( buffer ), nullptr, nullptr ) );
+		bool res = ReadFile( h_pipe, buffer, sizeof( buffer ), nullptr, nullptr );
+		assert( res );
 
 		uint32_t fnv_hash = *std::bit_cast< uint32_t * >( &buffer[ 0 ] );
 		uint32_t thread_id = *std::bit_cast< uint32_t * >( &buffer[ 4 ] );
@@ -47,7 +48,8 @@ void client_thread( HANDLE h_pipe ) {
 			//SetNamedPipeHandleState( gateway::pipe, &mode, nullptr, nullptr );
 
 			DWORD wr = { };
-			assert( WriteFile( gateway::pipe, wb_buffer, sizeof( wb_buffer ), &wr, nullptr ) );
+			bool res = WriteFile( gateway::pipe, wb_buffer, sizeof( wb_buffer ), &wr, nullptr );
+			assert( res );
 
 			//mode = PIPE_WAIT | PIPE_READMODE_MESSAGE;
 			//SetNamedPipeHandleState( gateway::pipe, &mode, nullptr, nullptr );
@@ -90,7 +92,8 @@ HANDLE ipc::create_target_pipe( ) {
 	assert( h_pipe != INVALID_HANDLE_VALUE );
 
 	DWORD mode = PIPE_READMODE_MESSAGE;
-	assert( SetNamedPipeHandleState( h_pipe, &mode, nullptr, nullptr ) );
+	bool res = SetNamedPipeHandleState( h_pipe, &mode, nullptr, nullptr );
+	assert( res );
 
 	return h_pipe;
 }

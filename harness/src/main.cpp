@@ -63,7 +63,8 @@ int main( int argc, char **argv ) {
 
 	uint32_t tid = GetCurrentThreadId( );
 	std::println( "(*) Pipe connected, send TID {}", tid );
-	assert( WriteFile( h_pipe, ( void* )&tid, 4, nullptr, nullptr ) );
+	bool res = WriteFile( h_pipe, ( void * )&tid, 4, nullptr, nullptr );
+	assert( res );
 
 	std::println( "(*) written" );
 	Sleep( 500 );

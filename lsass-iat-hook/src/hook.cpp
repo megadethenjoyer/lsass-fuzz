@@ -138,9 +138,11 @@ bool hook::hook_iat( std::string_view process_name, std::string_view module_name
 	assert( pid != 0 );
 
 	std::println( "(*) Found PID {}", pid );
-	assert( driver::init( pid ) );
+	bool res = driver::init( pid );
+	assert( res );
 
-	assert( create_universal_buffer( ipc::create_target_pipe( ) ) );
+	res = create_universal_buffer( ipc::create_target_pipe( ) );
+	assert(  res );
 
 	finder::mod mod = finder::find_module( module_name );
 	assert( mod.invalid( ) == false );
@@ -150,7 +152,8 @@ bool hook::hook_iat( std::string_view process_name, std::string_view module_name
 	auto *module_buffer = static_cast< uint8_t * >( malloc( mod.size ) );
 	assert( module_buffer != nullptr );
 
-	assert( driver::read_raw( mod.base, module_buffer, mod.size ) );
+	res = driver::read_raw( mod.base, module_buffer, mod.size );
+	assert( res );
 
 	auto *dos_header = std::bit_cast< IMAGE_DOS_HEADER * >( module_buffer );
 	assert( dos_header->e_magic == IMAGE_DOS_SIGNATURE );

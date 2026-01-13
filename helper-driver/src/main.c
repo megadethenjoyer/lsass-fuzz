@@ -74,7 +74,7 @@ NTSTATUS irp_create_close( _In_ DEVICE_OBJECT *device, _Inout_ IRP *irp ) {
 
 NTSTATUS ioctl( uint32_t ctl_code, void *sys_buf, uint32_t buf_len ) {
 	if ( buf_len != sizeof( struct helper_data ) ) {
-		DbgPrintEx( 0, 0, "lsass-fuzz-helper: invalid buf size\n" );
+		//DbgPrintEx( 0, 0, "lsass-fuzz-helper: invalid buf size\n" );
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -83,7 +83,7 @@ NTSTATUS ioctl( uint32_t ctl_code, void *sys_buf, uint32_t buf_len ) {
 	PEPROCESS process = NULL;
 	NTSTATUS lookup_status = PsLookupProcessByProcessId( data->process_id, &process );
 	if ( NT_SUCCESS( lookup_status ) == FALSE ) {
-		DbgPrintEx( 0, 0, "lsass-fuzz-helper: lookup %d failed\n", ( uint32_t )( ( UINT64 )data->process_id ) );
+		//DbgPrintEx( 0, 0, "lsass-fuzz-helper: lookup %d failed\n", ( uint32_t )( ( UINT64 )data->process_id ) );
 		return lookup_status;
 	}
 	HANDLE h_proc = { 0 };
@@ -94,7 +94,7 @@ NTSTATUS ioctl( uint32_t ctl_code, void *sys_buf, uint32_t buf_len ) {
 
 	NTSTATUS open_status = ZwOpenProcess( &h_proc, PROCESS_ALL_ACCESS, &oa, &cid );
 	if ( NT_SUCCESS( open_status ) == FALSE ) {
-		DbgPrintEx( 0, 0, "lsass-fuzz-helper: failed to open handle %x\n", ( UINT32 )( open_status ) );
+		//DbgPrintEx( 0, 0, "lsass-fuzz-helper: failed to open handle %x\n", ( UINT32 )( open_status ) );
 		return open_status;
 	}
 
@@ -104,28 +104,28 @@ NTSTATUS ioctl( uint32_t ctl_code, void *sys_buf, uint32_t buf_len ) {
 
 	switch ( ctl_code ) {
 	case HELPER_READ: {
-		DbgPrintEx( 0, 0, "lsass-fuzz-helper: read [0x%p]\n", data->remote_addr );
+		//DbgPrintEx( 0, 0, "lsass-fuzz-helper: read [0x%p]\n", data->remote_addr );
 		status = MmCopyVirtualMemory( process, data->remote_addr, PsGetCurrentProcess( ), data->local_addr, data->data_size, KernelMode, &ret_size );
 		break;
 	}
 
 	case HELPER_WRITE: {
-		DbgPrintEx( 0, 0, "lsass-fuzz-helper: write [0x%p]\n", data->remote_addr );
+		//DbgPrintEx( 0, 0, "lsass-fuzz-helper: write [0x%p]\n", data->remote_addr );
 		status = MmCopyVirtualMemory( PsGetCurrentProcess( ), data->local_addr, process, data->remote_addr, data->data_size, KernelMode, &ret_size );
 		break;
 	}
 
 	case HELPER_GET_PEB: {
-		DbgPrintEx( 0, 0, "lsass-fuzz-helper: get peb for %lld\n", ( UINT64 )( data->process_id ) );
+		//DbgPrintEx( 0, 0, "lsass-fuzz-helper: get peb for %lld\n", ( UINT64 )( data->process_id ) );
 
 		PROCESS_BASIC_INFORMATION basic_info = { 0 };
 		NTSTATUS query_status = ZwQueryInformationProcess( h_proc, ProcessBasicInformation, &basic_info, sizeof( basic_info ), NULL );
 		if ( NT_SUCCESS( query_status ) == FALSE ) {
-			DbgPrintEx( 0, 0, "lsass-fuzz-helper: failed to query info %x\n", ( UINT32 )( query_status ) );
+			//DbgPrintEx( 0, 0, "lsass-fuzz-helper: failed to query info %x\n", ( UINT32 )( query_status ) );
 			return query_status;
 		}
 
-		DbgPrintEx( 0, 0, "lsass-fuzz-helper: got PEB base %p\n", basic_info.PebBaseAddress );
+		//DbgPrintEx( 0, 0, "lsass-fuzz-helper: got PEB base %p\n", basic_info.PebBaseAddress );
 		memcpy( data->local_addr, &basic_info.PebBaseAddress, sizeof( basic_info.PebBaseAddress ) );
 
 		status = STATUS_SUCCESS;
@@ -133,16 +133,16 @@ NTSTATUS ioctl( uint32_t ctl_code, void *sys_buf, uint32_t buf_len ) {
 	}
 
 	case HELPER_ALLOCATE: {
-		DbgPrintEx( 0, 0, "lsass-fuzz-helper: allocate %lld for %lld\n", data->data_size, ( UINT64 )( data->process_id ) );
+		//DbgPrintEx( 0, 0, "lsass-fuzz-helper: allocate %lld for %lld\n", data->data_size, ( UINT64 )( data->process_id ) );
 		void *allocated_base = NULL;
 		size_t size = data->data_size;
 		NTSTATUS alloc_status = ZwAllocateVirtualMemory( h_proc, &allocated_base, 0, &size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
 		if ( NT_SUCCESS( alloc_status ) == FALSE ) {
-			DbgPrintEx( 0, 0, "lsass-fuzz-helper: failed to allocate %x\n", ( UINT32 )( alloc_status ) );
+			//DbgPrintEx( 0, 0, "lsass-fuzz-helper: failed to allocate %x\n", ( UINT32 )( alloc_status ) );
 			return alloc_status;
 		}
 
-		DbgPrintEx( 0, 0, "lsass-fuzz-helper: got alloc base %p\n", allocated_base );
+		//DbgPrintEx( 0, 0, "lsass-fuzz-helper: got alloc base %p\n", allocated_base );
 		memcpy( data->local_addr, &allocated_base, sizeof( allocated_base ) );
 
 		status = STATUS_SUCCESS;
@@ -154,7 +154,7 @@ NTSTATUS ioctl( uint32_t ctl_code, void *sys_buf, uint32_t buf_len ) {
 		HANDLE h_target = { 0 };
 		NTSTATUS dup_status = ZwDuplicateObject( H_CURRENT_PROCESS, data->remote_addr, h_proc, &h_target, GENERIC_READ | GENERIC_WRITE, 0, 0 );
 		if ( NT_SUCCESS( dup_status ) == FALSE ) {
-			DbgPrintEx( 0, 0, "lsass-fuzz-helper: failed to duplicate %x\n", ( UINT32 )( dup_status ) );
+			//DbgPrintEx( 0, 0, "lsass-fuzz-helper: failed to duplicate %x\n", ( UINT32 )( dup_status ) );
 			return dup_status;
 		}
 
@@ -173,7 +173,7 @@ NTSTATUS ioctl( uint32_t ctl_code, void *sys_buf, uint32_t buf_len ) {
 
 		NTSTATUS protect_status = ZwProtectVirtualMemory( h_proc, &target_addr, &size, new_protect, old_protect );
 		if ( NT_SUCCESS( protect_status ) == FALSE ) {
-			DbgPrintEx( 0, 0, "lsass-fuzz-helper: failed to protect %x\n", ( UINT32 )( protect_status ) );
+			//DbgPrintEx( 0, 0, "lsass-fuzz-helper: failed to protect %x\n", ( UINT32 )( protect_status ) );
 			return protect_status;
 		}
 
@@ -181,7 +181,7 @@ NTSTATUS ioctl( uint32_t ctl_code, void *sys_buf, uint32_t buf_len ) {
 	}
 
 	default: {
-		DbgPrintEx( 0, 0, "lsass-fuzz-helper: invalid ctl_code\n" );
+		//DbgPrintEx( 0, 0, "lsass-fuzz-helper: invalid ctl_code\n" );
 		break;
 	}
 	}
@@ -210,7 +210,7 @@ NTSTATUS irp_ioctl( _In_ DEVICE_OBJECT *device, _Inout_ IRP *irp ) {
 void DriverUnload( _In_ DRIVER_OBJECT *driver ) {
 	UNREFERENCED_PARAMETER( driver );
 
-	DbgPrintEx( 0, 0, "lsass-fuzz-helper: driver unloading\n" );
+	//DbgPrintEx( 0, 0, "lsass-fuzz-helper: driver unloading\n" );
 
 	UNICODE_STRING dos_name = DOS_NAME;
 	IoDeleteSymbolicLink( &dos_name );
@@ -248,7 +248,7 @@ NTSTATUS DriverEntry( _In_ DRIVER_OBJECT *driver, _In_ UNICODE_STRING *registry_
 	driver->MajorFunction[ IRP_MJ_CREATE ] = irp_create_close;
 	driver->MajorFunction[ IRP_MJ_DEVICE_CONTROL ] = irp_ioctl;
 
-	DbgPrintEx( 0, 0, "lsass-fuzz-helper: driver device set up\n" );
+	//DbgPrintEx( 0, 0, "lsass-fuzz-helper: driver device set up\n" );
 
 	return STATUS_SUCCESS;
 }
