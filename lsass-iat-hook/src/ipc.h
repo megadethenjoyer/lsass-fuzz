@@ -5,6 +5,6 @@
 namespace ipc {
 	inline HANDLE g_pipe;
 
-	void init( );
+	void init( const char *name );
 	HANDLE create_target_pipe( );
 }

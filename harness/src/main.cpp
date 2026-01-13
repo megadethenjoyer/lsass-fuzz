@@ -34,7 +34,13 @@ void recv_buf( ) {
 	ReadFile( g_pipe, buffer, sizeof( buffer ), nullptr, nullptr );
 }
 
-int main( ) {
+int main( int argc, char **argv ) {
+	if ( argc < 2 ) {
+		std::println( "(*) bad args" );
+		std::println( "    usage: <x.exe> gw_pipe_name" );
+		system( "pause" );
+		return 2;
+	}
 	std::println( "(*) Setting up harness" );
 	if ( !current_harness::setup( ) ) {
 		std::println( "(!) Failed to set up harness" );
@@ -43,7 +49,8 @@ int main( ) {
 	}
 
 	std::println( "(+) Harness set up" );
-	HANDLE h_pipe = CreateNamedPipeA( "\\\\.\\pipe\\TargetPipe", PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 0, 4, 0, nullptr );
+	std::println( "(*) Use pipe {}", argv[ 1 ] );
+	HANDLE h_pipe = CreateNamedPipeA( argv[ 1 ], PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 0, 4, 0, nullptr );
 	assert( h_pipe != INVALID_HANDLE_VALUE );
 
 	g_pipe = h_pipe;

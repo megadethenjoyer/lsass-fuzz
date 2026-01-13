@@ -7,7 +7,7 @@
 #include "hook.h"
 #include "driver.h"
 
-constexpr const char *pipe_name = "\\\\.\\pipe\\LsassFuzzPipe";
+const char *pipe_name = nullptr;
 
 void client_thread( HANDLE h_pipe ) {
 	char buffer[ 8 ];
@@ -74,7 +74,9 @@ void ipc_thread( HANDLE h_pipe ) {
 	std::thread( client_thread, h_pipe ).detach( );
 }
 
-void ipc::init( ) {
+void ipc::init( const char *name ) {
+	pipe_name = name;
+
 	HANDLE h_pipe = CreateNamedPipe( pipe_name, PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 0, 4, 0, nullptr );
 	assert( h_pipe != INVALID_HANDLE_VALUE );
 
@@ -84,7 +86,7 @@ void ipc::init( ) {
 }
 
 HANDLE ipc::create_target_pipe( ) {
-	HANDLE h_pipe = CreateFile( "\\\\.\\pipe\\LsassFuzzPipe", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
+	HANDLE h_pipe = CreateFile( pipe_name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
 	assert( h_pipe != INVALID_HANDLE_VALUE );
 
 	DWORD mode = PIPE_READMODE_MESSAGE;

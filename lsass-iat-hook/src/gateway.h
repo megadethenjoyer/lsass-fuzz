@@ -11,5 +11,5 @@ namespace gateway {
 	inline bool in_operation = false;
 	inline std::mutex op_mutex;
 
-	void init( );
+	void init( const char *pipe_name, const char *client_name, size_t bufsize );
 }
