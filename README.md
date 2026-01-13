@@ -91,5 +91,3 @@ This is done to simulate lsass client calls.
 Currently I am using LsaLogonUser with MSV1.0 Interactive logon, implemented in harness. See its code for reference.
 I need to make a lot more harnesses for this to be useful.
 I also should figure out lsass crashes. (They would be the most interesting since I could probably do remote DOS of a machine with them, or maybe even full blown RCE or local ACE)
-
-With the recent commits I added thread safety, later I will add multithreading via multiple processes which would mean multiple harnesses at the same time (kinda required since one harness only really does one authentication package, and there are a lot of them)
