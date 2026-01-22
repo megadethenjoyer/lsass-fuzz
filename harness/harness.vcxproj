@@ -133,13 +133,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\lsalogonuser-interactive-logon.cpp" />
+    <ClCompile Include="src\lsalogonuser-kerb-interactive-logon.cpp" />
+    <ClCompile Include="src\lsalogonuser-msv1-interactive-logon.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\sample.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\lsalogonuser-interactive-logon.h" />
-    <ClInclude Include="src\sample.h" />
+    <ClInclude Include="src\harness.h" />
+    <ClInclude Include="src\lsalogonuser-kerb-interactive-logon.h" />
+    <ClInclude Include="src\lsalogonuser-msv1-interactive-logon.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

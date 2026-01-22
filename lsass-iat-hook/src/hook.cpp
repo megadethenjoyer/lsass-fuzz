@@ -141,6 +141,7 @@ bool hook::hook_iat( std::string_view process_name, std::string_view module_name
 	bool res = driver::init( pid );
 	assert( res );
 
+
 	res = create_universal_buffer( ipc::create_target_pipe( ) );
 	assert(  res );
 
@@ -175,7 +176,8 @@ bool hook::hook_iat( std::string_view process_name, std::string_view module_name
 			break;
 		}
 
-		assert( hook_module( module_buffer, descriptor, mod.base ) );
+		bool res = hook_module( module_buffer, descriptor, mod.base );
+		assert( res );
 	}
 
 	return true;

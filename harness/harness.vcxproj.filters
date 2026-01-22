@@ -18,18 +18,21 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\sample.cpp">
+    <ClCompile Include="src\lsalogonuser-msv1-interactive-logon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\lsalogonuser-interactive-logon.cpp">
+    <ClCompile Include="src\lsalogonuser-kerb-interactive-logon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\sample.h">
+    <ClInclude Include="src\lsalogonuser-msv1-interactive-logon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\lsalogonuser-interactive-logon.h">
+    <ClInclude Include="src\lsalogonuser-kerb-interactive-logon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\harness.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

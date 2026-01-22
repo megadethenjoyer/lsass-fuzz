@@ -4,11 +4,11 @@
 #include <print>
 #include <cstdio>
 #include <iostream>
-#include "lsalogonuser-interactive-logon.h"
+#include "lsalogonuser-kerb-interactive-logon.h"
 
 #pragma comment(lib, "secur32.lib")
 
-bool lsa_logon_user_interactive_logon_harness::setup( ) {
+bool lsa_logon_user_kerb_interactive_logon_harness::setup( ) {
 	/*
 	LSA_OPERATIONAL_MODE mode = { };
 
@@ -71,10 +71,10 @@ bool lsa_logon_user_interactive_logon_harness::setup( ) {
 	return true;
 }
 
-bool lsa_logon_user_interactive_logon_harness::execute( char *buffer ) {
+bool lsa_logon_user_kerb_interactive_logon_harness::execute( char *buffer ) {
 
-	MSV1_0_INTERACTIVE_LOGON il = {
-		.MessageType = MsV1_0InteractiveLogon
+	KERB_INTERACTIVE_LOGON il = {
+		.MessageType = KerbInteractiveLogon,
 	};
 	
 	uint16_t b1 = wcsnlen( ( wchar_t* )buffer, 8 );

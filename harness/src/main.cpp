@@ -8,15 +8,24 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
+#include <memory>
+#include <iostream>
+#include <fstream>
 #include <print>
 
-#include "sample.h"
-#include "lsalogonuser-interactive-logon.h"
+#include "lsalogonuser-msv1-interactive-logon.h"
+#include "lsalogonuser-kerb-interactive-logon.h"
 
-using current_harness = lsa_logon_user_interactive_logon_harness;
+#define OPT( x ) if ( name == #x ) { return std::make_unique< x >( ); }
+std::unique_ptr< harness > get_harness( const std::string_view name ) {
+	OPT( lsa_logon_user_msv1_interactive_logon_harness );
+	OPT( lsa_logon_user_kerb_interactive_logon_harness );
 
-constexpr size_t BUFSIZE = current_harness::buf_size;
-char buffer[ BUFSIZE ];
+	return nullptr;
+}
+
+char *buffer = nullptr;
+size_t buf_size = 0;
 
 HANDLE g_pipe = { };
 
@@ -31,18 +40,36 @@ void send_crashed( ) {
 }
 
 void recv_buf( ) {
-	ReadFile( g_pipe, buffer, sizeof( buffer ), nullptr, nullptr );
+	ReadFile( g_pipe, buffer, buf_size, nullptr, nullptr );
 }
 
 int main( int argc, char **argv ) {
-	if ( argc < 2 ) {
+	if ( argc < 4 ) {
 		std::println( "(*) bad args" );
-		std::println( "    usage: <x.exe> gw_pipe_name" );
+		std::println( "    usage: <x.exe> gw_pipe_name harness_name tmp_bufsize_file" );
 		system( "pause" );
 		return 2;
 	}
+
+	const char *bufsize_file = argv[ 3 ];
+
+	const char *harness_name = argv[ 2 ];
+	std::println( "(*) Getting harness {}", harness_name );
+	auto harness = get_harness( harness_name );
+	if ( harness == nullptr ) {
+		std::println( "(!) No such harness {}", harness_name );
+		system( "pause" );
+		return 3;
+	}
+
+	std::println( "(*) Write to {}", bufsize_file );
+	{
+		std::ofstream s( bufsize_file );
+		s << harness->get_bufsize( );
+	}
+
 	std::println( "(*) Setting up harness" );
-	if ( !current_harness::setup( ) ) {
+	if ( !harness->setup( ) ) {
 		std::println( "(!) Failed to set up harness" );
 		system( "pause" );
 		return EXIT_FAILURE;
@@ -69,11 +96,13 @@ int main( int argc, char **argv ) {
 	std::println( "(*) written" );
 	Sleep( 500 );
 
-	std::println( "(*) Pipe ready, run main loop (bufsize = {})", current_harness::buf_size );
+	buffer = harness->alloc_buffer( );
+	buf_size = harness->get_bufsize( );
+	std::println( "(*) Pipe ready, run main loop (bufsize = {})", buf_size );
 	while ( true ) {
 		recv_buf( );
 
-		bool crashed = current_harness::execute( buffer );
+		bool crashed = harness->execute( buffer );
 		if ( crashed ) {
 			send_crashed( );
 			puts( "CRASH" );

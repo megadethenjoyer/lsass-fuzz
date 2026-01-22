@@ -4,10 +4,14 @@
 #include <ntsecapi.h>
 #include <cstddef>
 
-struct lsa_logon_user_interactive_logon_harness {
-	static constexpr size_t buf_size = 8*3*2;
-	static bool setup( );
-	static bool execute( char *buffer );
+#include "harness.h"
+
+struct lsa_logon_user_kerb_interactive_logon_harness: harness {
+	bool setup( ) override;
+	bool execute( char *buffer ) override;
+	inline size_t get_bufsize( ) override {
+		return 8 * 3 * 2;
+	}
 
 	static inline char g_origin_name_str[ ] = "uselessoriginname";
 	static inline LSA_STRING g_origin_name = {
