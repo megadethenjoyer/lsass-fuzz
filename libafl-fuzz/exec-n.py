@@ -2,7 +2,7 @@ import os
 import sys
 import time
 
-if len(sys.argv) < 3:
+if len(sys.argv) != 3:
     print("Bad usage")
     print("exec-n.py <n> <harness>")
     sys.exit(1)
