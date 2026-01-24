@@ -4,7 +4,7 @@ import string
 import time
 import sys
 
-if len(sys.argv) < 2:
+if len(sys.argv) != 2:
     print('bad usage')
     sys.exit(1)
 
